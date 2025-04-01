@@ -1,0 +1,12 @@
+version: "3"
+services:
+  web2hls:
+    build: .
+    platform: linux/amd64
+    ports:
+      - "3000:3000"
+    environment:
+      - TARGET_URL=https://trade.kraken.com
+      - RESOLUTION=1920x1080
+    volumes:
+      - ./hls:/app/hls
