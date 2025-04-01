@@ -22,6 +22,9 @@ COPY . .
 # Switch back to root to run ffmpeg safely
 USER root
 
+# Create and set permissions for hls directory
+RUN mkdir -p /app/hls && chown -R pptruser:pptruser /app/hls
+
 # Optional: double-check permissions for dist
 RUN chown -R pptruser:pptruser /app/dist
 USER pptruser
