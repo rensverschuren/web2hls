@@ -11,18 +11,24 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install deps
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
 # Install only Chromium for Playwright
 RUN npx playwright install chromium
 
-# Copy source code
+# Copy source files
 COPY . .
+
+# Build the TypeScript project
+RUN npm run build
 
 # Set display for Xvfb
 ENV DISPLAY=:99
 
-# Start app
+# Expose port if needed (optional, good for local Docker or Fly.io)
+EXPOSE 3000
+
+# Start the app
 CMD ["node", "dist/controller.js"]
