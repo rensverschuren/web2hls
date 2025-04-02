@@ -1,6 +1,6 @@
-// controller.ts (LL-HLS + sub-second segment tuning)
+// controller.ts (LL-HLS + sub-second segment tuning with Puppeteer)
 import express, { Request, Response, RequestHandler } from "express";
-import { chromium, Browser, Page } from "playwright";
+import puppeteer, { Browser, Page } from "puppeteer";
 import { spawn, ChildProcess, execSync } from "child_process";
 import dotenv from "dotenv";
 
@@ -30,29 +30,48 @@ let ffmpeg: ChildProcess | null = null;
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log("🚀 Launching Playwright browser...");
-    browser = await chromium.launch({
+    console.log("🚀 Launching Puppeteer browser...");
+    browser = await puppeteer.launch({
       headless: false,
+      executablePath:
+        process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
       args: [
         `--window-size=${width},${height}`,
+        "--kiosk",
+        "--start-fullscreen",
+        "--start-maximized",
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
         "--disable-infobars",
         "--disable-web-security",
-        "--autoplay-policy=no-user-gesture-required",
+        "--disable-dev-shm-usage",
+        "--disable-extensions",
         "--disable-translate",
+        "--disable-features=TranslateUI",
+        "--disable-component-extensions-with-background-pages",
+        "--autoplay-policy=no-user-gesture-required",
+        "--disable-background-media-suspend",
+        "--hide-scrollbars",
         "--no-default-browser-check",
         "--no-first-run",
-        "--disable-background-media-suspend",
-        "--kiosk",
+        "--disable-notifications",
+        "--force-device-scale-factor=1",
+        "--remote-debugging-port=9222",
+        "--app-auto-launched",
+        "--force-renderer-accessibility",
+        "--disable-gpu",
+        "--disable-infobars",
+        "--disable-software-rasterizer",
+        "--disable-features=IsolateOrigins,site-per-process",
       ],
+      ignoreDefaultArgs: ["--enable-automation"],
     });
 
-    const context = await browser.newContext({ viewport: { width, height } });
-    page = await context.newPage();
+    console.log("📄 Creating new page...");
+    page = await browser.newPage();
+    await page.setViewport({ width, height });
     await page.addStyleTag({ content: "* { cursor: none !important; }" });
-    await page.goto(TARGET_URL, { waitUntil: "commit" });
+    await page.goto(TARGET_URL, { waitUntil: "load" });
     console.log("✅ Browser setup complete");
 
     console.log("🎥 Starting ffmpeg with LL-HLS + short segments...");
@@ -106,10 +125,10 @@ let ffmpeg: ChildProcess | null = null;
 
     app.listen(PORT as number, "0.0.0.0", () => {
       console.log(
-        `\u{1F3A5} Serving HLS at http://localhost:${PORT}/stream/stream.m3u8`
+        `🎥 Serving HLS at http://localhost:${PORT}/stream/stream.m3u8`
       );
       console.log(
-        `\u{1F4AC} Navigate to a URL: GET /navigate?url=https://example.com`
+        `💬 Navigate to a URL: GET /navigate?url=https://example.com`
       );
     });
   } catch (err) {
@@ -133,7 +152,7 @@ const navigateHandler: RequestHandler = async (req, res) => {
 
   console.log("🌍 Navigating to:", url);
   try {
-    await page.goto(url, { waitUntil: "commit", timeout: 20000 });
+    await page.goto(url, { waitUntil: "load", timeout: 20000 });
     await page.addStyleTag({ content: "* { cursor: none !important; }" });
 
     const newUrl = page.url();
