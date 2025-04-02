@@ -41,3 +41,9 @@ htmlcov/
 .cache/ 
 
 hls/*.ts
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

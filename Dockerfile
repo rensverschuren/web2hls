@@ -1,32 +1,28 @@
-FROM ghcr.io/puppeteer/puppeteer:latest
+FROM node:20-slim
 
-# Install ffmpeg (still needed for streaming)
-USER root
+# Install required dependencies for Chromium to run
 RUN apt-get update && apt-get install -y \
-  ffmpeg \
-  xvfb \
-  x11-utils
+  xvfb ffmpeg wget curl ca-certificates \
+  libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+  libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libgtk-3-0 \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-# Set working directory and copy files
+# Set working directory
 WORKDIR /app
-COPY package*.json ./
 
-# Change owner and install deps
-RUN chown -R pptruser:pptruser /app
-USER pptruser
+# Copy package files and install deps
+COPY package*.json ./
 RUN npm install
 
-# Copy source files and build output
+# Install only Chromium for Playwright
+RUN npx playwright install chromium
+
+# Copy source code
 COPY . .
 
-# Switch back to root to run ffmpeg safely
-USER root
+# Set display for Xvfb
+ENV DISPLAY=:99
 
-# Optional: double-check permissions for dist
-RUN chown -R pptruser:pptruser /app/dist
-USER pptruser
-
-# Expose port
-EXPOSE 3000
-
-CMD ["bash", "start.sh"]
+# Start app
+CMD ["node", "dist/controller.js"]
