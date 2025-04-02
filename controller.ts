@@ -1,4 +1,4 @@
-// controller.ts (Playwright + LL-HLS version)
+// controller.ts (LL-HLS + sub-second segment tuning)
 import express, { Request, Response, RequestHandler } from "express";
 import { chromium, Browser, Page } from "playwright";
 import { spawn, ChildProcess, execSync } from "child_process";
@@ -55,7 +55,7 @@ let ffmpeg: ChildProcess | null = null;
     await page.goto(TARGET_URL, { waitUntil: "commit" });
     console.log("✅ Browser setup complete");
 
-    console.log("🎥 Starting ffmpeg with LL-HLS...");
+    console.log("🎥 Starting ffmpeg with LL-HLS + short segments...");
     ffmpeg = spawn(
       "ffmpeg",
       [
@@ -76,7 +76,7 @@ let ffmpeg: ChildProcess | null = null;
         "-f",
         "hls",
         "-hls_time",
-        "1",
+        "0.5",
         "-hls_playlist_type",
         "event",
         "-hls_flags",
@@ -133,26 +133,6 @@ const navigateHandler: RequestHandler = async (req, res) => {
 
   console.log("🌍 Navigating to:", url);
   try {
-    // await page.evaluate(() => {
-    //   const el = document.createElement("div");
-    //   el.style.position = "fixed";
-    //   el.style.top = "50%";
-    //   el.style.left = "50%";
-    //   el.style.width = "50px";
-    //   el.style.height = "50px";
-    //   el.style.margin = "-25px";
-    //   el.style.borderRadius = "50%";
-    //   el.style.border = "5px solid #000";
-    //   el.style.borderTop = "5px solid transparent";
-    //   el.style.animation = "spin 1s linear infinite";
-    //   el.style.zIndex = "999999";
-
-    //   const style = document.createElement("style");
-    //   style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
-    //   document.body.appendChild(style);
-    //   document.body.appendChild(el);
-    // });
-
     await page.goto(url, { waitUntil: "commit", timeout: 20000 });
     await page.addStyleTag({ content: "* { cursor: none !important; }" });
 
