@@ -18,22 +18,21 @@ let screencastClients: express.Response[] = [];
 
 (async () => {
   try {
-    console.log("🖥️ Starting Xvfb...");
-    execSync(`Xvfb :99 -screen 0 ${RESOLUTION}x24 &`, { stdio: "inherit" });
-    process.env.DISPLAY = ":99";
+    // console.log("🖥️ Starting Xvfb...");
+    // execSync(`Xvfb :99 -screen 0 ${RESOLUTION}x24 &`, { stdio: "inherit" });
+    // process.env.DISPLAY = ":99";
 
     console.log("🚀 Launching Puppeteer...");
     browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       executablePath:
         process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
       args: [
         `--window-size=${width},${height}`,
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--hide-scrollbars",
         "--disable-infobars",
-        "--kiosk",
+        "--disable-gpu",
       ],
     });
 
@@ -53,9 +52,9 @@ let screencastClients: express.Response[] = [];
 
     let lastFrame = 0;
     client.on("Page.screencastFrame", async ({ data, sessionId }) => {
-      const now = Date.now();
-      if (now - lastFrame < 100) return; // ~10 fps
-      lastFrame = now;
+      // const now = Date.now();
+      // if (now - lastFrame < 100) return; // ~10 fps
+      // lastFrame = now;
 
       const jpegBuffer = Buffer.from(data, "base64");
 
