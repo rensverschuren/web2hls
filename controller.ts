@@ -50,11 +50,16 @@ let screencastClients: express.Response[] = [];
       maxHeight: height,
     });
 
-    let lastFrame = 0;
+    let lastSent = 0;
     client.on("Page.screencastFrame", async ({ data, sessionId }) => {
-      // const now = Date.now();
-      // if (now - lastFrame < 100) return; // ~10 fps
-      // lastFrame = now;
+      const now = Date.now();
+
+      // Always ack the frame so Chrome keeps rendering
+      await client.send("Page.screencastFrameAck", { sessionId });
+
+      // But only send to clients if we want to throttle
+      if (now - lastSent < 100) return;
+      lastSent = now;
 
       const jpegBuffer = Buffer.from(data, "base64");
 
@@ -65,8 +70,6 @@ let screencastClients: express.Response[] = [];
         res.write(jpegBuffer);
         res.write("\r\n");
       });
-
-      await client.send("Page.screencastFrameAck", { sessionId });
     });
 
     console.log(`✅ Screencast running`);
