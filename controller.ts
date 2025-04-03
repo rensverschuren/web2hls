@@ -51,14 +51,15 @@ let screencastClients: express.Response[] = [];
     });
 
     let lastSent = 0;
+
     client.on("Page.screencastFrame", async ({ data, sessionId }) => {
       const now = Date.now();
 
-      // Always ack the frame so Chrome keeps rendering
+      // Always ack so Chromium keeps sending frames
       await client.send("Page.screencastFrameAck", { sessionId });
 
-      // But only send to clients if we want to throttle
-      if (now - lastSent < 100) return;
+      // Send only 1 frame per second
+      if (now - lastSent < 1000) return;
       lastSent = now;
 
       const jpegBuffer = Buffer.from(data, "base64");
@@ -71,7 +72,6 @@ let screencastClients: express.Response[] = [];
         res.write("\r\n");
       });
     });
-
     console.log(`✅ Screencast running`);
   } catch (err) {
     console.error("❌ Failed to initialize:", err);
