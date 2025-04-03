@@ -45,13 +45,18 @@ let screencastClients: express.Response[] = [];
     const client = await page.target().createCDPSession();
     await client.send("Page.enable");
     await client.send("Page.startScreencast", {
-      format: "png",
-      quality: 80,
+      format: "jpeg",
+      quality: 70,
       maxWidth: width,
       maxHeight: height,
     });
 
+    let lastFrame = 0;
     client.on("Page.screencastFrame", async ({ data, sessionId }) => {
+      const now = Date.now();
+      if (now - lastFrame < 100) return; // ~10 fps
+      lastFrame = now;
+
       const jpegBuffer = Buffer.from(data, "base64");
 
       screencastClients.forEach((res) => {
