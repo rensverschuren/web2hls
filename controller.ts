@@ -45,7 +45,7 @@ let screencastClients: express.Response[] = [];
     const client = await page.target().createCDPSession();
     await client.send("Page.enable");
     await client.send("Page.startScreencast", {
-      format: "jpeg",
+      format: "png",
       quality: 80,
       maxWidth: width,
       maxHeight: height,
